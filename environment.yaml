@@ -1,0 +1,14 @@
+name: slamdring
+channels:
+- defaults
+dependencies:
+- pip=9.0.1=py36_1
+- python=3.6.2=0
+- pip:
+  - aiohttp==2.3.3
+  - cchardet==2.1.1
+  - click==6.7
+  - flake8==3.5.0
+  - requests==2.18.4
+prefix: /Users/timothyrenner/anaconda/envs/slamdring
+
