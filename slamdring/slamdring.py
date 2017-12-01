@@ -4,24 +4,44 @@ import aiohttp
 import csv
 
 
-async def process_records(request_queue, response_queue):
+def _csv_reader(file_handle, delimiter=","):
+    return csv.reader(file_handle, delimiter=delimiter)
+
+
+def _list_extractor(request_record):
+    return request_record[-1]
+
+
+def _append_processor(request_record, response):
+    return request_record + [response]
+
+
+def _csv_writer(file_handle, delimiter=","):
+    return csv.writer(file_handle, delimiter=delimiter)
+
+
+async def process_records(request_queue, response_queue, extractor, processor):
     """ Reads from the request queue in a loop, issues HTTP requests, and
         puts the responses on the response queue.
 
         Parameters:
             request_queue - The queue to read requests from.
             response_queue - The queue to put the responses on.
+            extractor - A function that takes a request record and returns the
+                request to perform.
+            processor - A function that takes a request record and a response
+                and creates a response record to pass to the writer.
     """
     async with aiohttp.ClientSession() as session:
         while True:
             request_record = await request_queue.get()
 
-            request = request_record[-1]
+            request = extractor(request_record)
 
             async with session.get(request) as response:
                 read_response = await response.text()
                 # Add the response to the request record.
-                response_record = request_record + [read_response]
+                response_record = processor(request_record, read_response)
 
                 await response_queue.put(response_record)
                 request_queue.task_done()
@@ -54,11 +74,18 @@ async def slam(input_file, output_file, num_tasks, delimiter):
     request_queue = asyncio.Queue()
     response_queue = asyncio.Queue()
 
-    reader = csv.reader(input_file, delimiter=delimiter)
-    writer = csv.writer(output_file, delimiter=delimiter)
+    reader = _csv_reader(input_file, delimiter=delimiter)
+    writer = _csv_writer(output_file, delimiter=delimiter)
 
     processor_tasks = [
-        asyncio.ensure_future(process_records(request_queue, response_queue))
+        asyncio.ensure_future(
+            process_records(
+                request_queue,
+                response_queue,
+                _list_extractor,
+                _append_processor
+            )
+        )
         for ii in range(num_tasks)
     ]
 
