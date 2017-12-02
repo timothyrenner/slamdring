@@ -3,21 +3,41 @@ import asyncio
 import aiohttp
 import csv
 
+from toolz import curry
+
 
 def _csv_reader(file_handle, delimiter=","):
     return csv.reader(file_handle, delimiter=delimiter)
+
+
+def _csv_dict_reader(file_handle, delimiter=","):
+    return csv.DictReader(file_handle, delimiter=delimiter)
 
 
 def _list_extractor(request_record):
     return request_record[-1]
 
 
+def _dict_extractor(request_record, request_field="request"):
+    return request_record[request_field]
+
+
 def _append_processor(request_record, response):
-    return request_record + [response]
+    if isinstance(request_record, list):
+        return request_record + [response]
+    else:
+        return {
+            "response": response,
+            **request_record
+        }
 
 
 def _csv_writer(file_handle, delimiter=","):
     return csv.writer(file_handle, delimiter=delimiter)
+
+
+def _csv_dict_writer(file_handle, fieldnames, delimiter=","):
+    return csv.DictWriter(file_handle, delimiter=",", fieldnames=fieldnames)
 
 
 async def process_records(request_queue, response_queue, extractor, processor):
@@ -62,7 +82,14 @@ async def write_records(response_queue, writer):
         response_queue.task_done()
 
 
-async def slam(input_file, output_file, num_tasks, delimiter):
+async def slam(
+    input_file,
+    output_file,
+    num_tasks,
+    delimiter,
+    format,
+    request_field
+):
     """ Sets up the async queues and tasks and executes the requests.
 
         Parameters:
@@ -74,15 +101,27 @@ async def slam(input_file, output_file, num_tasks, delimiter):
     request_queue = asyncio.Queue()
     response_queue = asyncio.Queue()
 
-    reader = _csv_reader(input_file, delimiter=delimiter)
-    writer = _csv_writer(output_file, delimiter=delimiter)
+    if format == "csv":
+        reader = _csv_reader(input_file, delimiter=delimiter)
+        writer = _csv_writer(output_file, delimiter=delimiter)
+        extractor = _list_extractor
+    elif format == "csv-header":
+        reader = _csv_dict_reader(input_file, delimiter=delimiter)
+        fields = reader.fieldnames
+        writer = _csv_dict_writer(
+            output_file,
+            delimiter=delimiter,
+            fieldnames=fields+["response"]
+        )
+        writer.writeheader()
+        extractor = curry(_dict_extractor)(request_field=request_field)
 
     processor_tasks = [
         asyncio.ensure_future(
             process_records(
                 request_queue,
                 response_queue,
-                _list_extractor,
+                extractor,
                 _append_processor
             )
         )
@@ -110,7 +149,13 @@ async def slam(input_file, output_file, num_tasks, delimiter):
 @click.option('--output-file', '-o', type=click.File('w'), default='-')
 @click.option('--num-tasks', '-n', type=int, default=1)
 @click.option('--delimiter', '-d', type=str, default=",")
-def cli(input_file, output_file, num_tasks, delimiter):
+@click.option(
+    '--format', '-f',
+    type=click.Choice(["csv", "csv-header"]),
+    default="csv"
+)
+@click.option('--request-field', '-r', type=str, default="request")
+def cli(input_file, output_file, num_tasks, delimiter, format, request_field):
     """ Command line interface for the API hammer. Assumes the input file
         has no header, and that the last column is the column with the HTTP
         requests.
@@ -118,7 +163,14 @@ def cli(input_file, output_file, num_tasks, delimiter):
     event_loop = asyncio.get_event_loop()
 
     event_loop.run_until_complete(
-        slam(input_file, output_file, num_tasks, delimiter)
+        slam(
+            input_file,
+            output_file,
+            num_tasks,
+            delimiter,
+            format,
+            request_field
+        )
     )
 
     event_loop.close()

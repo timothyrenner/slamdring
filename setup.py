@@ -13,6 +13,7 @@ setup(
     install_requires = [
         'click',
         'aiohttp',
+        'toolz'
     ],
     entry_points = {
         "console_scripts": ["slamdring=slamdring.slamdring:cli"]
