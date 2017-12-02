@@ -22,14 +22,15 @@ def _dict_extractor(request_record, request_field="request"):
     return request_record[request_field]
 
 
-def _append_processor(request_record, response):
-    if isinstance(request_record, list):
-        return request_record + [response]
-    else:
-        return {
-            "response": response,
-            **request_record
-        }
+def _list_append_processor(request_record, response):
+    return request_record + [response]
+
+
+def _dict_append_processor(request_record, response):
+    return {
+        "response": response,
+        **request_record
+    }
 
 
 def _csv_writer(file_handle, delimiter=","):
@@ -105,6 +106,7 @@ async def slam(
         reader = _csv_reader(input_file, delimiter=delimiter)
         writer = _csv_writer(output_file, delimiter=delimiter)
         extractor = _list_extractor
+        processor = _list_append_processor
     elif format == "csv-header":
         reader = _csv_dict_reader(input_file, delimiter=delimiter)
         fields = reader.fieldnames
@@ -115,6 +117,7 @@ async def slam(
         )
         writer.writeheader()
         extractor = curry(_dict_extractor)(request_field=request_field)
+        processor = _dict_append_processor
 
     processor_tasks = [
         asyncio.ensure_future(
@@ -122,7 +125,7 @@ async def slam(
                 request_queue,
                 response_queue,
                 extractor,
-                _append_processor
+                processor
             )
         )
         for ii in range(num_tasks)
