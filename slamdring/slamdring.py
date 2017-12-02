@@ -145,20 +145,47 @@ async def slam(
 
 
 @click.command()
-@click.option('--input-file', '-i', type=click.File('r'), default='-')
-@click.option('--output-file', '-o', type=click.File('w'), default='-')
-@click.option('--num-tasks', '-n', type=int, default=1)
-@click.option('--delimiter', '-d', type=str, default=",")
+@click.option(
+    '--input-file', '-i',
+    type=click.File('r'),
+    default='-',
+    help="The input file to read from. Default: STDIN."
+)
+@click.option(
+    '--output-file', '-o',
+    type=click.File('w'),
+    default='-',
+    help="The output file to write to. Default: STDOUT."
+)
+@click.option(
+    '--num-tasks', '-n',
+    type=int,
+    default=1,
+    help="The number of async tasks to issue requests from. Default: 1."
+)
+@click.option(
+    '--delimiter', '-d',
+    type=str,
+    default=",",
+    help="The delimiter for CSV formats. Default: , ."
+)
 @click.option(
     '--format', '-f',
     type=click.Choice(["csv", "csv-header"]),
-    default="csv"
+    default="csv",
+    help="The file format for inputs / outputs. Choices are CSV and CSV with "
+    "a header. Default: csv."
 )
-@click.option('--request-field', '-r', type=str, default="request")
+@click.option(
+    '--request-field', '-r',
+    type=str,
+    default="request",
+    help="For CSV with header, the name of the field with the request. "
+    " Default: request."
+)
 def cli(input_file, output_file, num_tasks, delimiter, format, request_field):
-    """ Command line interface for the API hammer. Assumes the input file
-        has no header, and that the last column is the column with the HTTP
-        requests.
+    """ The API hammer. Issues concurrent HTTP GET requests in an async event
+        loop.
     """
     event_loop = asyncio.get_event_loop()
 
