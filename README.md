@@ -72,6 +72,32 @@ The `resp.csv` file will look something like this:
 It looks exactly like the input file with a new column containing the response.
 Note that it's not in the same order.
 
+Slamdring also works with CSVs that have a header (`--format csv-header`).
+
+See below for the full list of options available:
+
+```
+Usage: slamdring [OPTIONS]
+
+  The API hammer. Issues concurrent HTTP GET requests in an async event
+  loop.
+
+Options:
+  -i, --input-file FILENAME      The input file to read from. Default: STDIN.
+  -o, --output-file FILENAME     The output file to write to. Default: STDOUT.
+  -n, --num-tasks INTEGER        The number of async tasks to issue requests
+                                 from. Default: 1.
+  -d, --delimiter TEXT           The delimiter for CSV formats. Default: , .
+  -f, --format [csv|csv-header]  The file format for inputs / outputs. Choices
+                                 are CSV and CSV with a header. Default: csv.
+  -r, --request-field TEXT       For CSV with header, the name of the field
+                                 with the request.  Default: request.
+  --help                         Show this message and exit.
+```
+
+Note that the output file format always matches the input file format.
+This might change in the future, or it might not.
+
 ## Performance
 
 Slamdring is significantly faster than a set of serial blocking calls using vanilla  `requests` (there are some libraries that do provide async capability for requests, but the regular requests is synchronous and blocking).
