@@ -72,7 +72,9 @@ The `resp.csv` file will look something like this:
 It looks exactly like the input file with a new column containing the response.
 Note that it's not in the same order.
 
-Slamdring also works with CSVs that have a header (`--format csv-header`).
+Slamdring also works with CSVs that have a header (`--format csv-header`) and line delimited JSON files (`--format json`).
+For those formats, the response is put in a "response" field.
+For json, the response is parsed at the same "level" as the rest of the fields so each record in the output doesn't need to parse the response separately (unlike the CSV formats).
 
 See below for the full list of options available:
 
@@ -83,16 +85,18 @@ Usage: slamdring [OPTIONS]
   loop.
 
 Options:
-  -i, --input-file FILENAME      The input file to read from. Default: STDIN.
-  -o, --output-file FILENAME     The output file to write to. Default: STDOUT.
-  -n, --num-tasks INTEGER        The number of async tasks to issue requests
-                                 from. Default: 1.
-  -d, --delimiter TEXT           The delimiter for CSV formats. Default: , .
-  -f, --format [csv|csv-header]  The file format for inputs / outputs. Choices
-                                 are CSV and CSV with a header. Default: csv.
-  -r, --request-field TEXT       For CSV with header, the name of the field
-                                 with the request.  Default: request.
-  --help                         Show this message and exit.
+  -i, --input-file FILENAME       The input file to read from. Default: STDIN.
+  -o, --output-file FILENAME      The output file to write to. Default:
+                                  STDOUT.
+  -n, --num-tasks INTEGER         The number of async tasks to issue requests
+                                  from. Default: 1.
+  -d, --delimiter TEXT            The delimiter for CSV formats. Default: , .
+  -f, --format [csv|csv-header|json]
+                                  The file format for inputs / outputs.
+                                  Default: csv.
+  -r, --request-field TEXT        For CSV with header, the name of the field
+                                  with the request.  Default: request.
+  --help                          Show this message and exit.
 ```
 
 Note that the output file format always matches the input file format.

@@ -193,11 +193,12 @@ async def slam(
     help="The file format for inputs / outputs. Default: csv."
 )
 @click.option(
+    # TODO: Add ability to select column number with this field.
     '--request-field', '-r',
     type=str,
     default="request",
-    help="For CSV with header, the name of the field with the request. "
-    " Default: request."
+    help="For CSV with header and JSON, the name of the field with the "
+    "request. Default: request."
 )
 def cli(input_file, output_file, num_tasks, delimiter, format, request_field):
     """ The API hammer. Issues concurrent HTTP GET requests in an async event
