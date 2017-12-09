@@ -2,8 +2,9 @@ import click
 import asyncio
 import aiohttp
 import csv
+import json
 
-from toolz import curry
+from toolz import curry, identity
 
 
 def _csv_reader(file_handle, delimiter=","):
@@ -12,6 +13,10 @@ def _csv_reader(file_handle, delimiter=","):
 
 def _csv_dict_reader(file_handle, delimiter=","):
     return csv.DictReader(file_handle, delimiter=delimiter)
+
+
+def _json_reader(file_handle):
+    return map(json.loads, file_handle)
 
 
 def _list_extractor(request_record):
@@ -26,19 +31,19 @@ def _list_append_processor(request_record, response):
     return request_record + [response]
 
 
-def _dict_append_processor(request_record, response):
+def _dict_append_processor(request_record, response, parse=identity):
     return {
-        "response": response,
+        "response": parse(response),
         **request_record
     }
 
 
-def _csv_writer(file_handle, delimiter=","):
-    return csv.writer(file_handle, delimiter=delimiter)
+def _csv_write(writer, record):
+    writer.writerow(record)
 
 
-def _csv_dict_writer(file_handle, fieldnames, delimiter=","):
-    return csv.DictWriter(file_handle, delimiter=",", fieldnames=fieldnames)
+def _json_write(writer, record):
+    writer.write(json.dumps(record) + "\n")
 
 
 async def process_records(request_queue, response_queue, extractor, processor):
@@ -68,18 +73,18 @@ async def process_records(request_queue, response_queue, extractor, processor):
                 request_queue.task_done()
 
 
-async def write_records(response_queue, writer):
+async def write_records(response_queue, write):
     """ Reads the responses from the response queue and writes it to the writer.
 
         Parameters:
             response_queue - The queue with the API responses.
-            writer - The writer to write the responses with.
+            write - A function that writes the record to a file / stdout.
     """
     while True:
 
         response_record = await response_queue.get()
 
-        writer.writerow(response_record)
+        write(response_record)
         response_queue.task_done()
 
 
@@ -104,20 +109,29 @@ async def slam(
 
     if format == "csv":
         reader = _csv_reader(input_file, delimiter=delimiter)
-        writer = _csv_writer(output_file, delimiter=delimiter)
+        write = curry(_csv_write)(csv.writer(output_file, delimiter=delimiter))
         extractor = _list_extractor
         processor = _list_append_processor
     elif format == "csv-header":
         reader = _csv_dict_reader(input_file, delimiter=delimiter)
+        # Use the field names from the reader for the writer.
         fields = reader.fieldnames
-        writer = _csv_dict_writer(
+        writer = csv.DictWriter(
             output_file,
             delimiter=delimiter,
             fieldnames=fields+["response"]
         )
+        # Write the header before doing anything else.
         writer.writeheader()
+        # Construct the rest of the helpers.
+        write = curry(_csv_write)(writer)
         extractor = curry(_dict_extractor)(request_field=request_field)
         processor = _dict_append_processor
+    elif format == "json":
+        reader = _json_reader(input_file)
+        write = curry(_json_write)(output_file)
+        extractor = curry(_dict_extractor)(request_field=request_field)
+        processor = curry(_dict_append_processor)(parse=json.loads)
 
     processor_tasks = [
         asyncio.ensure_future(
@@ -131,7 +145,7 @@ async def slam(
         for ii in range(num_tasks)
     ]
 
-    writer_task = asyncio.ensure_future(write_records(response_queue, writer))
+    writer_task = asyncio.ensure_future(write_records(response_queue, write))
 
     # Lazily put the rows in the queue.
     for row in reader:
@@ -174,10 +188,9 @@ async def slam(
 )
 @click.option(
     '--format', '-f',
-    type=click.Choice(["csv", "csv-header"]),
+    type=click.Choice(["csv", "csv-header", "json"]),
     default="csv",
-    help="The file format for inputs / outputs. Choices are CSV and CSV with "
-    "a header. Default: csv."
+    help="The file format for inputs / outputs. Default: csv."
 )
 @click.option(
     '--request-field', '-r',
