@@ -22,7 +22,7 @@ pip install -e .
 
 Here's how to use it.
 First, you need a file with all of the requests in it.
-There's an example file in `data/test_data.csv`.
+There's an example file in `data/test_data_csv_comma.csv`.
 It looks like this:
 
 ```
@@ -44,10 +44,10 @@ There's more than one way to invoke slamdring to fill out responses for this mas
 
 ```shell
 # Using args for the files.
-slamdring --input-file data/test_data.csv --output-file resp.csv --num-tasks 5
+slamdring --input-file data/test_data_csv_comma.csv --output-file resp.csv --num-tasks 5
 
 # Defaults for input and output files are STDIN and STDOUT.
-cat data/test_data.csv | slamdring --num-tasks 3 > resp.csv
+cat data/test_data_csv_comma.csv | slamdring --num-tasks 3 > resp.csv
 ```
 
 The `resp.csv` file will look something like this:
@@ -168,3 +168,12 @@ The reason I only put one writer task is for consistency - with multiple tasks w
 It's possible to have each consumer write to it's own file and merge them at the end, but that's not a high latency output task, so I'm not sure there's a lot to gain.
 By contrast dropping into a database or issuing a bunch of PUTs _is_ a high latency output task, so maybe there's a future use case there.
 For now I'm sticking with CSV files because I'm a data scientist and that's all I know :).
+
+## Tests
+
+There's a suite of regression tests in there if you want to run those for some reason.
+First, start up `json-server` (`npm install -g json-server`, then `json-server db.json`), then run
+
+```
+scripts/checkup.sh
+```
