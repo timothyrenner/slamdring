@@ -7,6 +7,13 @@ import json
 from toolz import curry, identity
 
 
+def _safe_json_parse(record):
+    try:
+        return json.loads(record)
+    except json.JSONDecodeError:
+        return record
+
+
 def _csv_reader(file_handle, delimiter=","):
     return csv.reader(file_handle, delimiter=delimiter)
 
@@ -131,7 +138,7 @@ async def slam(
         reader = _json_reader(input_file)
         write = curry(_json_write)(output_file)
         extractor = curry(_dict_extractor)(request_field=request_field)
-        processor = curry(_dict_append_processor)(parse=json.loads)
+        processor = curry(_dict_append_processor)(parse=_safe_json_parse)
 
     processor_tasks = [
         asyncio.ensure_future(
