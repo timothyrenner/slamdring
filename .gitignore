@@ -1,3 +1,4 @@
 *.egg-info
-data/
+data/*_answer*
+data/test_data_large.csv
 __pycache__

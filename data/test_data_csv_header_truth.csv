@@ -1,0 +1,11 @@
+id,request_url,response
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
+1,http://localhost:3000/posts/1,"{""id"": 1, ""author"": ""typicode"", ""title"": ""json-server""}"
