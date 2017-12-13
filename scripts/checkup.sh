@@ -68,3 +68,37 @@ python scripts/equal_files.py \
 printf "\n"
 echo "============================== DONE ===================================="
 printf "\n"
+
+printf "\n"
+echo "=================== Testing CSV No Repeat Request ======================"
+printf "\n"
+slamdring \
+    --input-file data/test_data_csv_comma.csv \
+    --output-file data/test_data_csv_comma_no_request_answer.csv \
+    --format csv \
+    --no-repeat-request
+
+python scripts/equal_files.py \
+    data/test_data_csv_comma_no_request_answer.csv \
+    data/test_data_csv_comma_no_request_truth.csv \
+    --format csv
+printf "\n"
+echo "============================== DONE ===================================="
+printf "\n"
+
+printf "\n"
+echo "=================== Testing JSON No Repeat Request ====================="
+printf "\n"
+slamdring \
+    --input-file data/test_data_json.json \
+    --output-file data/test_data_json_no_request_answer.json \
+    --format json \
+    --no-repeat-request
+
+python scripts/equal_files.py \
+    data/test_data_json_no_request_answer.json \
+    data/test_data_json_no_request_truth.json \
+    --format json
+printf "\n"
+echo "============================== DONE ===================================="
+printf "\n"

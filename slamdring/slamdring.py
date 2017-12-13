@@ -4,7 +4,7 @@ import aiohttp
 import csv
 import json
 
-from toolz import curry, identity
+from toolz import curry, identity, dissoc
 
 
 def _safe_json_parse(record):
@@ -38,10 +38,31 @@ def _list_append_processor(request_record, response):
     return request_record + [response]
 
 
-def _dict_append_processor(request_record, response, parse=identity):
+def _list_replace_processor(request_record, response):
+    return request_record[:-1] + [response]
+
+
+def _dict_append_processor(
+    request_record,
+    response,
+    parse=identity,
+    request_field="request"
+):
     return {
         "response": parse(response),
         **request_record
+    }
+
+
+def _dict_replace_processor(
+    request_record, \
+    response, 
+    parse=identity,
+    request_field="request"
+):
+    return {
+        "response": parse(response),
+        **dissoc(request_record, request_field)
     }
 
 
@@ -101,7 +122,8 @@ async def slam(
     num_tasks,
     delimiter,
     format,
-    request_field
+    request_field,
+    no_repeat_request
 ):
     """ Sets up the async queues and tasks and executes the requests.
 
@@ -118,7 +140,8 @@ async def slam(
         reader = _csv_reader(input_file, delimiter=delimiter)
         write = curry(_csv_write)(csv.writer(output_file, delimiter=delimiter))
         extractor = _list_extractor
-        processor = _list_append_processor
+        processor = _list_replace_processor if no_repeat_request \
+            else _list_append_processor
     elif format == "csv-header":
         reader = _csv_dict_reader(input_file, delimiter=delimiter)
         # Use the field names from the reader for the writer.
@@ -133,12 +156,18 @@ async def slam(
         # Construct the rest of the helpers.
         write = curry(_csv_write)(writer)
         extractor = curry(_dict_extractor)(request_field=request_field)
-        processor = _dict_append_processor
+        processor = curry(
+            _dict_replace_processor if no_repeat_request
+            else _dict_append_processor
+        )(request_field=request_field)
     elif format == "json":
         reader = _json_reader(input_file)
         write = curry(_json_write)(output_file)
         extractor = curry(_dict_extractor)(request_field=request_field)
-        processor = curry(_dict_append_processor)(parse=_safe_json_parse)
+        processor = curry(
+            _dict_replace_processor if no_repeat_request 
+            else _dict_append_processor
+        )(request_field=request_field, parse=_safe_json_parse)
 
     processor_tasks = [
         asyncio.ensure_future(
@@ -207,7 +236,21 @@ async def slam(
     help="For CSV with header and JSON, the name of the field with the "
     "request. Default: request."
 )
-def cli(input_file, output_file, num_tasks, delimiter, format, request_field):
+@click.option(
+    '--no-repeat-request',
+    is_flag=True,
+    default=False,
+    help="Don't reprint the request field in the output."
+)
+def cli(
+    input_file, 
+    output_file, 
+    num_tasks, 
+    delimiter, 
+    format, 
+    request_field,
+    no_repeat_request
+):
     """ The API hammer. Issues concurrent HTTP GET requests in an async event
         loop.
     """
@@ -220,7 +263,8 @@ def cli(input_file, output_file, num_tasks, delimiter, format, request_field):
             num_tasks,
             delimiter,
             format,
-            request_field
+            request_field,
+            no_repeat_request
         )
     )
 
