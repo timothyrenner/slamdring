@@ -119,3 +119,20 @@ python scripts/equal_files.py \
 printf "\n"
 echo "============================== DONE ===================================="
 printf "\n"
+
+printf "\n"
+echo "=================== Testing CSV Request Field Neg ======================"
+printf "\n"
+slamdring \
+    --input-file data/test_data_csv_comma_request_field.csv \
+    --output-file data/test_data_csv_comma_request_field_answer.csv \
+    --format csv \
+    --request-field -2
+
+python scripts/equal_files.py \
+    data/test_data_csv_comma_request_field_answer.csv \
+    data/test_data_csv_comma_request_field_truth.csv \
+    --format csv
+printf "\n"
+echo "============================== DONE ===================================="
+printf "\n"

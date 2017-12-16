@@ -38,8 +38,16 @@ def _list_append_processor(request_record, response):
     return request_record + [response]
 
 
-def _list_replace_processor(request_record, response):
-    return request_record[:-1] + [response]
+def _list_replace_processor_negative(request_record, response, request_field):
+    return request_record[:len(request_record)+request_field] + \
+        request_record[len(request_record)+request_field+1:] + \
+        [response]
+
+
+def _list_replace_processor(request_record, response, request_field):
+    return request_record[:request_field] + \
+        request_record[request_field+1:] + \
+        [response]
 
 
 def _dict_append_processor(
@@ -146,8 +154,23 @@ async def slam(
                 -1 if request_field == "request" else int(request_field)
             )
         )
-        processor = _list_replace_processor if no_repeat_request \
-            else _list_append_processor
+
+        # Select the processor based on whether the request field is being
+        # repeated, and whether the column provided for the request is a 
+        # negative or positive integer.
+        request_field_int = -1 if request_field == "request" \
+            else int(request_field)
+        if no_repeat_request and request_field_int < 0:
+            processor = curry(_list_replace_processor_negative)(
+                request_field=request_field_int
+            )
+        elif no_repeat_request:
+            processor = curry(_list_replace_processor)(
+                request_field=request_field_int
+            )
+        else:
+            processor = _list_append_processor
+
     elif format == "csv-header":
         reader = _csv_dict_reader(input_file, delimiter=delimiter)
         # Use the field names from the reader for the writer.
@@ -166,6 +189,7 @@ async def slam(
             _dict_replace_processor if no_repeat_request
             else _dict_append_processor
         )(request_field=request_field)
+        
     elif format == "json":
         reader = _json_reader(input_file)
         write = curry(_json_write)(output_file)
@@ -239,7 +263,7 @@ async def slam(
     type=str,
     default="request",
     help="For CSV with header and JSON, the name of the field with the "
-    "request. Default: request (csv-header,json) or -1 (csv)."
+    "request. Default: request (csv-header,json) or last column (csv)."
 )
 @click.option(
     '--no-repeat-request',
