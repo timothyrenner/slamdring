@@ -94,9 +94,11 @@ Options:
   -f, --format [csv|csv-header|json]
                                   The file format for inputs / outputs.
                                   Default: csv.
-  -r, --request-field TEXT        For CSV with header and JSON, the name of
-                                  the field with the request. Default: request
-                                  (csv-header,json) or -1 (csv).
+  -r, --request-field TEXT        The name of the field with the request.
+                                  Default: request (csv-header,json) or last
+                                  column (csv).
+  -R, --response-field TEXT       The name of the field to put the response
+                                  into for csv-header and json formats.
   --no-repeat-request             Don't reprint the request field in the
                                   output.
   --help                          Show this message and exit.
