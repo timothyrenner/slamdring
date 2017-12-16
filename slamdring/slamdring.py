@@ -26,8 +26,8 @@ def _json_reader(file_handle):
     return map(json.loads, file_handle)
 
 
-def _list_extractor(request_record):
-    return request_record[-1]
+def _list_extractor(request_record, request_field=-1):
+    return request_record[request_field]
 
 
 def _dict_extractor(request_record, request_field="request"):
@@ -139,7 +139,13 @@ async def slam(
     if format == "csv":
         reader = _csv_reader(input_file, delimiter=delimiter)
         write = curry(_csv_write)(csv.writer(output_file, delimiter=delimiter))
-        extractor = _list_extractor
+        # If the request field is the default "request", translate that into
+        # the last column. Otherwise convert the option into an integer.
+        extractor = curry(_list_extractor)(
+            request_field=(
+                -1 if request_field == "request" else int(request_field)
+            )
+        )
         processor = _list_replace_processor if no_repeat_request \
             else _list_append_processor
     elif format == "csv-header":
@@ -229,12 +235,11 @@ async def slam(
     help="The file format for inputs / outputs. Default: csv."
 )
 @click.option(
-    # TODO: Add ability to select column number with this field.
     '--request-field', '-r',
     type=str,
     default="request",
     help="For CSV with header and JSON, the name of the field with the "
-    "request. Default: request."
+    "request. Default: request (csv-header,json) or -1 (csv)."
 )
 @click.option(
     '--no-repeat-request',
