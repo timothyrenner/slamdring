@@ -136,3 +136,23 @@ python scripts/equal_files.py \
 printf "\n"
 echo "============================== DONE ===================================="
 printf "\n"
+
+printf "\n"
+echo "================= Testing CSV-HEADER + RESPONSE FIELD =================="
+printf "\n"
+slamdring \
+    --input-file data/test_data_csv_header.csv \
+    --output-file data/test_data_csv_header_response_field_answer.csv \
+    --format csv-header \
+    --request-field request_url \
+    --response-field response_json
+
+python scripts/equal_files.py \
+    data/test_data_csv_header_response_field_answer.csv \
+    data/test_data_csv_header_response_field_truth.csv \
+    --delimiter , \
+    --format csv-header \
+    --response-field response_json
+printf "\n"
+echo "============================== DONE ===================================="
+printf "\n"

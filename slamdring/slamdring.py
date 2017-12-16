@@ -54,10 +54,11 @@ def _dict_append_processor(
     request_record,
     response,
     parse=identity,
-    request_field="request"
+    request_field="request",
+    response_field="response"
 ):
     return {
-        "response": parse(response),
+        response_field: parse(response),
         **request_record
     }
 
@@ -66,10 +67,11 @@ def _dict_replace_processor(
     request_record, \
     response, 
     parse=identity,
-    request_field="request"
+    request_field="request",
+    response_field="response"
 ):
     return {
-        "response": parse(response),
+        response_field: parse(response),
         **dissoc(request_record, request_field)
     }
 
@@ -131,15 +133,10 @@ async def slam(
     delimiter,
     format,
     request_field,
+    response_field,
     no_repeat_request
 ):
     """ Sets up the async queues and tasks and executes the requests.
-
-        Parameters:
-            input_file - The file to read requests from.
-            output_file - The file to write responses to.
-            num_tasks - The number of processor tasks to issue requests with.
-            delimiter - The delimiter of the input and output files.
     """
     request_queue = asyncio.Queue()
     response_queue = asyncio.Queue()
@@ -178,7 +175,7 @@ async def slam(
         writer = csv.DictWriter(
             output_file,
             delimiter=delimiter,
-            fieldnames=fields+["response"]
+            fieldnames=fields+[response_field]
         )
         # Write the header before doing anything else.
         writer.writeheader()
@@ -188,8 +185,8 @@ async def slam(
         processor = curry(
             _dict_replace_processor if no_repeat_request
             else _dict_append_processor
-        )(request_field=request_field)
-        
+        )(request_field=request_field, response_field=response_field)
+
     elif format == "json":
         reader = _json_reader(input_file)
         write = curry(_json_write)(output_file)
@@ -197,7 +194,11 @@ async def slam(
         processor = curry(
             _dict_replace_processor if no_repeat_request 
             else _dict_append_processor
-        )(request_field=request_field, parse=_safe_json_parse)
+        )(
+            request_field=request_field,
+            response_field=response_field,
+            parse=_safe_json_parse
+        )
 
     processor_tasks = [
         asyncio.ensure_future(
@@ -262,8 +263,15 @@ async def slam(
     '--request-field', '-r',
     type=str,
     default="request",
-    help="For CSV with header and JSON, the name of the field with the "
-    "request. Default: request (csv-header,json) or last column (csv)."
+    help="The name of the field with the request. Default: request "
+    "(csv-header,json) or last column (csv)."
+)
+@click.option(
+    '--response-field', '-R',
+    type=str,
+    default="response",
+    help="The name of the field to put the response into for csv-header and "
+    "json formats."
 )
 @click.option(
     '--no-repeat-request',
@@ -278,6 +286,7 @@ def cli(
     delimiter, 
     format, 
     request_field,
+    response_field,
     no_repeat_request
 ):
     """ The API hammer. Issues concurrent HTTP GET requests in an async event
@@ -293,6 +302,7 @@ def cli(
             delimiter,
             format,
             request_field,
+            response_field,
             no_repeat_request
         )
     )

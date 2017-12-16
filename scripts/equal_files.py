@@ -13,7 +13,8 @@ from toolz import dissoc
     default='csv'
 )
 @click.option('--delimiter', '-d', type=str, default=',')
-def main(answer_file, truth_file, format, delimiter):
+@click.option('--response-field', '-R', type=str, default="response")
+def main(answer_file, truth_file, format, delimiter, response_field):
     if format == "csv":
         answer_reader = csv.reader(answer_file, delimiter=delimiter)
         truth_reader = csv.reader(truth_file, delimiter=delimiter)
@@ -42,15 +43,15 @@ def main(answer_file, truth_file, format, delimiter):
             truth_request = truth[:-1]
             truth_response = json.loads(truth[-1])
         elif format == "csv-header":
-            answer_request = dissoc(answer, "response")
-            answer_response = json.loads(answer["response"])
-            truth_request = dissoc(truth, "response")
-            truth_response = json.loads(truth["response"])
+            answer_request = dissoc(answer, response_field)
+            answer_response = json.loads(answer[response_field])
+            truth_request = dissoc(truth, response_field)
+            truth_response = json.loads(truth[response_field])
         elif format == "json":
-            answer_request = dissoc(answer, "response")
-            answer_response = answer["response"]
-            truth_request = dissoc(truth, "response")
-            truth_response = truth["response"]
+            answer_request = dissoc(answer, response_field)
+            answer_response = answer[response_field]
+            truth_request = dissoc(truth, response_field)
+            truth_response = truth[response_field]
         
         if answer_request != truth_request:
             print("{} is not equal to {}.".format(
