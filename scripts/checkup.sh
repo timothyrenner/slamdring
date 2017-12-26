@@ -145,7 +145,8 @@ slamdring \
     --output-file data/test_data_csv_header_response_field_answer.csv \
     --format csv-header \
     --request-field request_url \
-    --response-field response_json
+    --response-field response_json \
+    --repeat-request
 
 python scripts/equal_files.py \
     data/test_data_csv_header_response_field_answer.csv \

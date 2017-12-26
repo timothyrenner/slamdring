@@ -99,7 +99,8 @@ Options:
                                   column (csv).
   -R, --response-field TEXT       The name of the field to put the response
                                   into for csv-header and json formats.
-  --no-repeat-request             Don't reprint the request field in the
+  --repeat-request / --no-repeat-request
+                                  Whether to reprint the request field in the
                                   output.
   --help                          Show this message and exit.
 ```

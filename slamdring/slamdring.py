@@ -134,7 +134,7 @@ async def slam(
     format,
     request_field,
     response_field,
-    no_repeat_request
+    repeat_request
 ):
     """ Sets up the async queues and tasks and executes the requests.
     """
@@ -157,11 +157,11 @@ async def slam(
         # negative or positive integer.
         request_field_int = -1 if request_field == "request" \
             else int(request_field)
-        if no_repeat_request and request_field_int < 0:
+        if not repeat_request and request_field_int < 0:
             processor = curry(_list_replace_processor_negative)(
                 request_field=request_field_int
             )
-        elif no_repeat_request:
+        elif not repeat_request:
             processor = curry(_list_replace_processor)(
                 request_field=request_field_int
             )
@@ -183,7 +183,7 @@ async def slam(
         write = curry(_csv_write)(writer)
         extractor = curry(_dict_extractor)(request_field=request_field)
         processor = curry(
-            _dict_replace_processor if no_repeat_request
+            _dict_replace_processor if not repeat_request
             else _dict_append_processor
         )(request_field=request_field, response_field=response_field)
 
@@ -192,7 +192,7 @@ async def slam(
         write = curry(_json_write)(output_file)
         extractor = curry(_dict_extractor)(request_field=request_field)
         processor = curry(
-            _dict_replace_processor if no_repeat_request 
+            _dict_replace_processor if not repeat_request 
             else _dict_append_processor
         )(
             request_field=request_field,
@@ -274,10 +274,9 @@ async def slam(
     "json formats."
 )
 @click.option(
-    '--no-repeat-request',
-    is_flag=True,
-    default=False,
-    help="Don't reprint the request field in the output."
+    '--repeat-request/--no-repeat-request',
+    default=True,
+    help="Whether to reprint the request field in the output."
 )
 def cli(
     input_file, 
@@ -287,7 +286,7 @@ def cli(
     format, 
     request_field,
     response_field,
-    no_repeat_request
+    repeat_request
 ):
     """ The API hammer. Issues concurrent HTTP GET requests in an async event
         loop.
@@ -303,7 +302,7 @@ def cli(
             format,
             request_field,
             response_field,
-            no_repeat_request
+            repeat_request
         )
     )
 
