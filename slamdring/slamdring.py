@@ -65,8 +65,8 @@ def _dict_append_processor(
 
 
 def _dict_replace_processor(
-    request_record, \
-    response, 
+    request_record,
+    response,
     parse=identity,
     request_field="request",
     response_field="response"
@@ -169,7 +169,7 @@ async def slam(
         )
 
         # Select the processor based on whether the request field is being
-        # repeated, and whether the column provided for the request is a 
+        # repeated, and whether the column provided for the request is a
         # negative or positive integer.
         request_field_int = -1 if request_field == "request" \
             else int(request_field)
@@ -208,7 +208,7 @@ async def slam(
         write = curry(_json_write)(output_file)
         extractor = curry(_dict_extractor)(request_field=request_field)
         processor = curry(
-            _dict_replace_processor if not repeat_request 
+            _dict_replace_processor if not repeat_request
             else _dict_append_processor
         )(
             request_field=request_field,
@@ -302,11 +302,11 @@ async def slam(
     "result in dropped records. Default: False."
 )
 def cli(
-    input_file, 
-    output_file, 
-    num_tasks, 
-    delimiter, 
-    format, 
+    input_file,
+    output_file,
+    num_tasks,
+    delimiter,
+    format,
     request_field,
     response_field,
     repeat_request,
