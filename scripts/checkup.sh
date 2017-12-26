@@ -157,3 +157,39 @@ python scripts/equal_files.py \
 printf "\n"
 echo "============================== DONE ===================================="
 printf "\n"
+
+printf "\n"
+echo "================== Testing BAD SERVER IGNORE EXCEPTIONS ================"
+printf "\n"
+slamdring \
+    --input-file data/test_data_bad_server.csv \
+    --output-file data/test_data_bad_server_answer.csv \
+    --format csv \
+    --ignore-exceptions
+
+python scripts/equal_files.py \
+    data/test_data_bad_server_answer.csv \
+    data/test_data_bad_server_truth.csv \
+    --delimiter , \
+    --format csv
+printf "\n"
+echo "============================== DONE ===================================="
+printf "\n"
+
+printf "\n"
+echo "==================== Testing BAD SERVER EXCEPTIONS ====================="
+printf "\n"
+slamdring \
+    --input-file data/test_data_bad_server.csv \
+    --output-file data/test_data_bad_server_answer.csv \
+    --format csv \
+    --no-ignore-exceptions
+
+python scripts/equal_files.py \
+    data/test_data_bad_server_answer.csv \
+    data/test_data_bad_server_truth.csv \
+    --delimiter , \
+    --format csv
+printf "\n"
+echo "============================== DONE ===================================="
+printf "\n"

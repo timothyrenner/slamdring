@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import csv
 import json
+import sys
 
 from toolz import curry, identity, dissoc
 
@@ -84,7 +85,13 @@ def _json_write(writer, record):
     writer.write(json.dumps(record) + "\n")
 
 
-async def process_records(request_queue, response_queue, extractor, processor):
+async def process_records(
+    request_queue,
+    response_queue,
+    extractor,
+    processor,
+    ignore_exceptions
+):
     """ Reads from the request queue in a loop, issues HTTP requests, and
         puts the responses on the response queue.
 
@@ -102,13 +109,21 @@ async def process_records(request_queue, response_queue, extractor, processor):
 
             request = extractor(request_record)
 
-            async with session.get(request) as response:
-                read_response = await response.text()
-                # Add the response to the request record.
-                response_record = processor(request_record, read_response)
+            try:
+                async with session.get(request) as response:
+                    read_response = await response.text()
+                    # Add the response to the request record.
+                    response_record = processor(request_record, read_response)
 
-                await response_queue.put(response_record)
-                request_queue.task_done()
+                    await response_queue.put(response_record)
+                    request_queue.task_done()
+            except Exception as e:
+                if ignore_exceptions:
+                    request_queue.task_done()
+                    pass
+                else:
+                    sys.stderr.write("Exception raised: {}.\n".format(str(e)))
+                    sys.exit(1)
 
 
 async def write_records(response_queue, write):
@@ -134,7 +149,8 @@ async def slam(
     format,
     request_field,
     response_field,
-    repeat_request
+    repeat_request,
+    ignore_exceptions
 ):
     """ Sets up the async queues and tasks and executes the requests.
     """
@@ -206,7 +222,8 @@ async def slam(
                 request_queue,
                 response_queue,
                 extractor,
-                processor
+                processor,
+                ignore_exceptions
             )
         )
         for ii in range(num_tasks)
@@ -276,7 +293,13 @@ async def slam(
 @click.option(
     '--repeat-request/--no-repeat-request',
     default=True,
-    help="Whether to reprint the request field in the output."
+    help="Whether to reprint the request field in the output. Default: True."
+)
+@click.option(
+    '--ignore-exceptions/--no-ignore-exceptions',
+    default=False,
+    help="Whether to ignore exceptions when processing. Setting to true may "
+    "result in dropped records. Default: False."
 )
 def cli(
     input_file, 
@@ -286,7 +309,8 @@ def cli(
     format, 
     request_field,
     response_field,
-    repeat_request
+    repeat_request,
+    ignore_exceptions
 ):
     """ The API hammer. Issues concurrent HTTP GET requests in an async event
         loop.
@@ -302,7 +326,8 @@ def cli(
             format,
             request_field,
             response_field,
-            repeat_request
+            repeat_request,
+            ignore_exceptions
         )
     )
 

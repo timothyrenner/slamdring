@@ -101,7 +101,11 @@ Options:
                                   into for csv-header and json formats.
   --repeat-request / --no-repeat-request
                                   Whether to reprint the request field in the
-                                  output.
+                                  output. Default: True.
+  --ignore-exceptions / --no-ignore-exceptions
+                                  Whether to ignore exceptions when
+                                  processing. Setting to true may result in
+                                  dropped records. Default: False.
   --help                          Show this message and exit.
 ```
 
