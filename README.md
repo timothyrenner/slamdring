@@ -1,4 +1,4 @@
-# Slamdring, the API Hammer
+# Slamdring, the HTTP Hammer
 
 > Turgon, King of Gondolin, wields, has, and holds the tool Slamdring, Foe of HTTP's realm, Hammer of the APIs.
 
